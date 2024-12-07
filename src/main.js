@@ -21,16 +21,14 @@ const loader = document.querySelector('.loader');
 const form = document.querySelector('.form-search');
 const galleryImg = document.querySelector('.gallery');
 const buttonMore = document.querySelector('.button-more');
-loader.style.display = 'none';
-buttonMore.style.display = 'none';
 
 form.addEventListener('submit', handlerSubmit);
 let textInput;
 let page;
 async function handlerSubmit(event) {
   event.preventDefault();
-  buttonMore.style.display = 'none';
   loader.style.display = 'block';
+  buttonMore.style.display = 'none';
   galleryImg.innerHTML = '';
   textInput = event.target.elements.text.value.trim();
 
@@ -62,6 +60,16 @@ async function handlerSubmit(event) {
       });
       event.target.reset();
       return;
+    } else if (data.hits.length === data.totalHits) {
+      iziToast.show({
+        message: "We're sorry, but you've reached the end of search results.",
+        backgroundColor: '#4E75FF',
+        messageColor: '#FAFAFB',
+        position: 'topRight',
+        progressBarColor: '#6C8CFF',
+      });
+    } else {
+      buttonMore.style.display = 'block';
     }
     const markup = createMarkup(data.hits);
     galleryImg.innerHTML = markup;
@@ -73,8 +81,6 @@ async function handlerSubmit(event) {
       top: rect,
       behavior: 'smooth',
     });
-
-    buttonMore.style.display = 'block';
   } catch (error) {
     loader.style.display = 'none';
     iziToast.show({
@@ -91,17 +97,18 @@ async function handlerSubmit(event) {
 }
 buttonMore.addEventListener('click', handelClick);
 async function handelClick(event) {
+  buttonMore.style.display = 'none';
   loader.style.display = 'block';
   try {
     page += 1;
     const data = await fetchData(textInput, page);
+
     loader.style.display = 'none';
 
     if (
       data.hits.length === 0 ||
-      15 * (page - 1) + data.hits.length > data.totalHits
+      (page - 1) * 15 + data.hits.length === data.totalHits
     ) {
-      buttonMore.style.display = 'none';
       iziToast.show({
         message: "We're sorry, but you've reached the end of search results.",
         backgroundColor: '#4E75FF',
@@ -109,7 +116,8 @@ async function handelClick(event) {
         position: 'topRight',
         progressBarColor: '#6C8CFF',
       });
-      return;
+    } else {
+      buttonMore.style.display = 'block';
     }
 
     galleryImg.insertAdjacentHTML('beforeend', createMarkup(data.hits));
